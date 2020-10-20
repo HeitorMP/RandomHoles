@@ -1,7 +1,9 @@
 
+inimigo tie se lancar contra a nave
 colocar ball no buraco
 mais dois inimigos
 criar niveis de dificuldade
-tela de transicao com musica e alguma animacao
-tela de abertura com musica ou animacao
-
+compor musica tela de transicao, startgame e gameover
+criar tela game over
+chave de dificuldade, no dificil eliminar os dois maiores buracos
+itens passando no exterior da tela

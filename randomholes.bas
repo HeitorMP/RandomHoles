@@ -30,29 +30,37 @@
 
   dim _Ch1_Sound = m
 
+  gosub __playfield_transicao
+ 
 __title_screen
+  AUDC0 = 12
+  AUDC1 = 1
+  
+  if joy0fire then e = 1
+  if e = 0 then goto __skip_sound_title
+  if musicTimer = 0 then goto changeMusicNoteTitle
+
+__volta_trilha_title
+
+  musicTimer = musicTimer - 1
+__skip_sound_title
+
   pfscore1 = 0 : scorecolor = $00
+  gosub __nave
+  _animacao = 10
   drawscreen
   COLUBK=$00
   COLUPF=$06
   player0y = 0
-  player1y = 0
-  playfield:
-  ...XXX.XXXXX.XXXX.X...X....XX...
-  ...X.....X...X....X...X...X..X..
-  ...XXX...X...XXXX.X...X...XXXX..
-  .....X...X...X....X...X...X..X..
-  ...XXX...X...XXXX.XXX.XXX.X..X..
-  ................................
-  ...XXXX.X....X..X.XXXX..........
-  ...X....X....X..X.X...X.........
-  ...X....X....X..X.XXXX..........
-  ...X....X....X..X.X...X.........
-  ...XXXX.XXXX.XXXX.XXXX..........
-end
+  COLUP1 = $0E
+  player1y = 85
+  player1x = 75
 
+ if joy0fire then e = 1
+ if e = 1 then pfscroll down
 
- if !joy0fire goto __title_screen
+ if !pfread(0,11) then goto __reset_game
+ goto __title_screen
 
 __reset_game
 
@@ -69,22 +77,8 @@ __reset_game
    missile1y = 0
    bally = 0
    COLUP1 = 00
- playfield:
- ................................
- ................................
- ................................
- ................................
- ................................
- ................................
- ................................
- ................................
- ................................
- ................................
- ................................
- ................................
-end
 
- player1x = 50 : player1y = 85
+ player1x = 75 : player1y = 85
  player0x = 20 : player0y = 1
 
  pfscore1=%00010101 : pfscorecolor = $40
@@ -102,18 +96,19 @@ __Main_Loop
    scorecolor = 14
 
  ; SOMA PONTO AO ACELERAR
-   if joy0up then pfscroll down : score = score + 1
-
+  if player1x < 20 || player1x > 133 then goto __skip_aceletarion_point 
+    if joy0up then pfscroll down : score = score + 1
+__skip_aceletarion_point
   ; MOVIMENTO LATERAL
-   if joy0left then player1x = player1x - 1 : goto __skip_joy
-   if joy0right then player1x = player1x + 1 : goto __skip_joy
+     
+   if joy0left && player1x > 1 then player1x = player1x - 1 : goto __skip_joy
+   if joy0right && player1x < 150 then player1x = player1x + 1 : goto __skip_joy
 
 __skip_joy
 
 
  ; ESCUDO *******
-   if !_bit_supressores{4} then goto __nave
-__retorna_nave
+   if !_bit_supressores{4} then gosub __nave
 
    if _bit_supressores{4} then goto __skip_escudo
    if pfscore1 = 0  then _bit_supressores{4} = 0 : goto __skip_escudo
@@ -237,44 +232,16 @@ __regular
   if !pfread(0,11) then _dificuldade = (rand&3) : goto __redesenha else return thisbank
 
 __redesenha
- _cont_telas = _cont_telas + 1
+ if player1x > 19 && player1x < 134 then _cont_telas = _cont_telas + 1
  d = (rand/16) + 1
  d = d + 2
- playfield:
- .XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
- X.X.X.X.X.X.X.X.X.X.X.X.X.X.X..X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
-end
- score = score + 1
+ gosub __playfield_regular
 
  return thisbank
 
 
 __perde_vida
-  playfield:
- .XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
- X.X.X.X.X.X.X.X.X.X.X.X.X.X.X..X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
-end
-
+  gosub __playfield_regular
 
     bally = 0
     missile1y = 0
@@ -315,7 +282,7 @@ __skip_som_explosao
  if joy0fire then _duracao_som0 = 0 : player1x = 80 : goto __skip_perde_vida
  goto __perde_vida
 
-
+ ; INIMIGOS
 __inimigo_bomba
   COLUP0 = $40
  player0:
@@ -365,7 +332,7 @@ __skip_vai_volta_tie
 
  return thisbank
 
-
+ ; ESCUDO
 __escudo
 
  player1:
@@ -400,7 +367,7 @@ end
   %0001000
 end
 
-  goto __retorna_nave
+  return thisbank
 
 
  ; TRANSICAO ENTRE AS FASES
@@ -411,27 +378,14 @@ __transicao
   AUDC0 = 12
   AUDC1 = 1
 
-  if musicTimer = 0 then goto changeMusicNote 
-__volta_trilha
+  if musicTimer = 0 then goto changeMusicNoteTransicao 
+__volta_trilha_transicao
   musicTimer = musicTimer - 1
   
 
  player0y = 0
 
-   playfield:
- .XXXXXXXXXXXX.....XXXXXXXXXXXXX.
- X.X.X.X.X.X.X.....X.X.X.X.X.X..X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
- X..............................X
-end
+ gosub __playfield_transicao
  drawscreen
 
   if player1x = 75 then goto __move_up
@@ -451,7 +405,42 @@ __skip_move
   goto __transicao
 
 
-changeMusicNote
+__playfield_regular
+  playfield:
+ .XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
+ X.X.X.X.X.X.X.X.X.X.X.X.X.X.X..X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+end
+  return thisbank
+
+; PLAYFIELD USADO NO TITLE E NA TRANSICAO
+__playfield_transicao
+     playfield:
+ .XXXXXXXXXXXX.....XXXXXXXXXXXXX.
+ X.X.X.X.X.X.X.....X.X.X.X.X.X..X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+ X..............................X
+end
+  return thisbank
+
+changeMusicNoteTransicao
   AUDF0 = musicData1[musicPointer]
   AUDF1 = musicData2[musicPointer]
   if musicData1[musicPointer] = 255 then AUDV1 = 0 else AUDV1 = 6
@@ -459,7 +448,17 @@ changeMusicNote
   musicTimer = 10
   musicPointer = musicPointer + 1
   if musicPointer > 22 then musicPointer = 0
-  goto __volta_trilha
+  goto __volta_trilha_transicao
+
+changeMusicNoteTitle
+  AUDF0 = musicData1[musicPointer]
+  AUDF1 = musicData2[musicPointer]
+  if musicData1[musicPointer] = 255 then AUDV1 = 0 else AUDV1 = 6
+  if musicData2[musicPointer] = 255 then AUDV0 = 0 else AUDV0 = 4
+  musicTimer = 10
+  musicPointer = musicPointer + 1
+  if musicPointer > 22 then musicPointer = 0
+  goto __volta_trilha_title
 ; DATA SOM
 
   data musicData1
