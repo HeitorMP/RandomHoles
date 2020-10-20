@@ -1,0 +1,7 @@
+
+colocar ball no buraco
+mais dois inimigos
+criar niveis de dificuldade
+tela de transicao com musica e alguma animacao
+tela de abertura com musica ou animacao
+
