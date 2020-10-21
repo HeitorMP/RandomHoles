@@ -13,7 +13,7 @@
   ; {3} - som
   ; {4} - escudo
   ; {5} -  ativa transicao de tela
-
+  ; {6} - ativa nave fora da barreira
   dim _cont_escudo = e
   dim _duracao_som0 = f
   dim _duracao_som1 = g
@@ -95,8 +95,11 @@ __Main_Loop
   ; COR DO SCORE
    scorecolor = 14
 
+  ; ATIVA NAVE FORA DA BARREIRA
+  if player1x < 20 || player1x > 133 then _bit_supressores{6} = 1 else _bit_supressores{6} = 0
+
  ; SOMA PONTO AO ACELERAR
-  if player1x < 20 || player1x > 133 then goto __skip_aceletarion_point 
+  if _bit_supressores{6} then goto __skip_aceletarion_point 
     if joy0up then pfscroll down : score = score + 1
 __skip_aceletarion_point
   ; MOVIMENTO LATERAL
@@ -136,8 +139,10 @@ __skip_transicao
   if _fases > 100 then _fases = 0
 
   if _fases = 0 then COLUPF = $00 : COLUBK = $8A : gosub __regular : gosub __inimigo_bomba
+  
+  if _fases >= 1 then COLUPF = $04 : COLUBK = $00 : COLUP1 = 14 : gosub __regular : goto __item_shield
   if _fases >= 1 then COLUPF = $04 : COLUBK = $00 : COLUP1 = 14 : gosub __regular : gosub __inimigo_tie
-
+__skip_item_shield
 ; CONTADORES
  _animacao = _animacao + 1
  if _animacao =  21 then _animacao = 0
@@ -167,6 +172,7 @@ __skip_dificuldade
 __skip_scroll
   drawscreen
 
+
  
 ; COLISOES E COLISOES POR FASE
    if _bit_supressores{4} then goto __skip_collision : rem se escudo on pula as colisoes
@@ -175,7 +181,7 @@ __skip_scroll
    if collision(ball,missile1) then bally = 100 : missile1y = 0
    if collision(player1,playfield) then _duracao_som0 = 80 :  pfscore2 = pfscore2/4 : goto __perde_vida
    if collision(missile1,playfield) then missile1y = 1
-   if collision(player0,player1) then _duracao_som0 = 80 : pfscore2 = pfscore2/4 : goto __perde_vida
+   
 __skip_perde_vida
 __skip_collision
 
@@ -186,9 +192,13 @@ __skip_collision
 
 __fase0
    if collision(missile1,player0) then missile1y = 0 : bally=0 : _bit_supressores{3} = 0 : _duracao_som0 = 10 : score = score + 100 : player0y = 0
+   if collision(player0,player1) then _duracao_som0 = 80 : pfscore2 = pfscore2/4 : goto __perde_vida
    goto __skip_collision_fases
 __fase1
    if collision(missile1,player0) then missile1y = 0 : bally=0 : _bit_supressores{3} = 0 : _duracao_som0 = 10 : score = score + 100 : player0y = 0
+   if collision(player0,player1) && !_bit_supressores{6} then _duracao_som0 = 80 : pfscore2 = pfscore2/4 : goto __perde_vida
+   if collision(player0,player1) && _bit_supressores{6} then player0y = 0 : pfscore1 = %00010101
+
    goto __skip_collision_fases
 
 __skip_collision_fases
@@ -315,7 +325,8 @@ __inimigo_tie
  %10000001
 end
  
- 
+ if player0y > 10 then goto __skip_tie
+
  if _bit_supressores{2}  then goto __volta else goto __vai
 
 __volta
@@ -326,6 +337,13 @@ __vai
 
  player0x = player0x + 1
  if player0x >= 120 then player0y = player0y + 5 : _bit_supressores{2} = 1
+ goto __skip_vai_volta_tie
+__skip_tie
+
+  if player1x > player0x then player0x = player0x + 1
+  if player1x < player0x then player0x = player0x - 1 
+  player0y = player0y + 2
+
 
 __skip_vai_volta_tie
  
@@ -369,6 +387,26 @@ end
 
   return thisbank
 
+ ;ITEM SHIELD
+__item_shield
+ COLUP0 = 12
+ if joy0up then player0y = player0y + 1
+ player0y = player0y + 1
+
+ player0x = 5
+ player0:
+ %00111100
+ %01000010
+ %10111101
+ %10000101
+ %10000101
+ %10111101
+ %10100001
+ %10111101
+ %01000010
+ %00111100
+end
+  goto __skip_item_shield
 
  ; TRANSICAO ENTRE AS FASES
 __transicao
