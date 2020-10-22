@@ -6,4 +6,5 @@ compor musica tela de transicao, startgame e gameover
 criar tela game over
 chave de dificuldade, no dificil eliminar os dois maiores buracos
 itens passando no exterior da tela ao final de cada fase
-    - insetir uma invencibilidade temporaria 
+    - (insetir uma invencibilidade temporaria)
+    - Abrir buraco lateral 
