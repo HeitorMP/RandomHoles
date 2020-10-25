@@ -3,6 +3,5 @@ colocar ball no buraco
 mais dois inimigos
 criar niveis de dificuldade
 compor musica tela de transicao, startgame e gameover
-criar tela game over
 chave de dificuldade, no dificil eliminar os dois maiores buracos
 item cai dos inimigos, aleatoriamente ou definido.

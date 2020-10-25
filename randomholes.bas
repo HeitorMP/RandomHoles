@@ -51,7 +51,6 @@ __reset_game
   score = 0
   scorecolor = $00
   missile1y = 0
-  bally = 0
   COLUP1 = 00
 
   player1x = 75 : player1y = 85
@@ -182,11 +181,15 @@ __randomicos
 
 __skip_dificuldade
 
-
+  
  ; ABRE O BURACO NA TELA DE ACORO COM OS VALORES DE D E C
   pfhline d 1 c off
 
-
+  
+  ballx = 80
+  bally = 5
+   ;if joy0up then bally = bally + 1
+  CTRLPF = $31
   goto __pfscroll
 
 __skip_scroll
@@ -210,18 +213,18 @@ __skip_collision
 
 
 __fase0
-   if collision(missile1,player0) then missile1y = 0 : bally=0 : _bit_supressores{3} = 0 : _duracao_som0 = 10 : score = score + 100 : player0y = 0
+   if collision(missile1,player0) then missile1y = 0 : _bit_supressores{3} = 0 : _duracao_som0 = 10 : score = score + 100 : player0y = 0
    if collision(player0,player1) then _duracao_som0 = 80 : pfscore2 = pfscore2/4 : goto __perde_vida
    goto __skip_collision_fases
 __fase1
   if _bit_supressores{7} then goto __collision_itemshield
   
-  if collision(missile1,player0) then missile1y = 0 : bally=0 :_bit_supressores{3} = 0 : _duracao_som0 = 10 : score = score + 100 : _bit_supressores{7} = 1
+  if collision(missile1,player0) then missile1y = 0 : _bit_supressores{3} = 0 : _duracao_som0 = 10 : score = score + 100 : _bit_supressores{7} = 1
   if collision(player0,player1) then _duracao_som0 = 80 : pfscore2 = pfscore2/4 : goto __perde_vida
   goto __skip_collision_fases
 
 __collision_itemshield
-  if collision(missile1,player0) then missile1y = 0 : bally=0 : _bit_supressores{3} = 0 : _duracao_som0 = 10 : _bit_supressores{7} = 0 : player0y = 0
+  if collision(missile1,player0) then missile1y = 0 : _bit_supressores{3} = 0 : _duracao_som0 = 10 : _bit_supressores{7} = 0 : player0y = 0
   if collision(player0,player1) then player0y = 0 : _bit_supressores{7} = 0 : pfscore1 = %00010101
 
 __skip_collision_fases
@@ -453,7 +456,7 @@ __transicao
  v = 0 ; para poder usar a variavel v no main tambem.
 __main_transicao
   missile1y = 0
-  bally = 100
+  ;bally = 100
 
   AUDC0 = 12
   AUDC1 = 1
