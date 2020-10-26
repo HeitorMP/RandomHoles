@@ -168,28 +168,29 @@ __skip_fase_inimigo
   _cont_escudo = _cont_escudo - 1
   if _cont_escudo = 0 && _bit_supressores{4} then pfscore1 = pfscore1/4 : _bit_supressores{4} = 0
 
+  if _fases < 4 then goto __randomicos
   if _fases < 4 then c = d + 8 : goto __skip_dificuldade
   if _fases < 8 then goto __randomicos
   if _fases < 100 then c = d + 2 : goto __skip_dificuldade
 
 __randomicos
   ; TAMANHO DO BURACO RANDOMICO - VALOR DE _dificuldade E GERADO EM REDESENHA
-  if _dificuldade = 0 then c = d + 8 : goto __skip_dificuldade
-  if _dificuldade = 1 then c = d + 6 : goto __skip_dificuldade
-  if _dificuldade = 2 then c = d + 4 : goto __skip_dificuldade
-  if _dificuldade = 3 then c = d + 2 : goto __skip_dificuldade
+  if _dificuldade = 0 then c = d + 8 : ballx = c + c + c + c : goto __skip_dificuldade
+  if _dificuldade = 1 then c = d + 6 : ballx = c + c + c + c + 4 : goto __skip_dificuldade
+  if _dificuldade = 2 then c = d + 4 : ballx = c + c + c + c + 8 : goto __skip_dificuldade
+  if _dificuldade = 3 then c = d + 2 : ballx = c + c + c + c + 12 : goto __skip_dificuldade
 
 __skip_dificuldade
 
   
+    
+
+  bally = 5
+
+  CTRLPF = $31
  ; ABRE O BURACO NA TELA DE ACORO COM OS VALORES DE D E C
   pfhline d 1 c off
 
-  
-  ballx = 80
-  bally = 5
-   ;if joy0up then bally = bally + 1
-  CTRLPF = $31
   goto __pfscroll
 
 __skip_scroll
@@ -270,9 +271,14 @@ __regular
   if !pfread(0,11) then _dificuldade = (rand&3) : goto __redesenha else return thisbank
 
 __redesenha
+
+
   if player1x > 19 && player1x < 134 then _cont_telas = _cont_telas + 1
   d = (rand/16) + 1
   d = d + 2
+
+
+
   gosub __playfield_regular
 
   return thisbank
