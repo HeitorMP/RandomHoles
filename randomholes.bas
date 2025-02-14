@@ -20,8 +20,8 @@
   ; {2} - vai e vem dos inimigos
   ; {3} - som
   ; {4} - escudo
-  ; {5} -  ativa transicao de tela
-  ; {6} - ativa nave fora da barreira
+  ; {5} - livre
+  ; {6} - livre
   ; {7} - ativa item na tela
   dim musicTimer = k
   dim _dificuldade = l
@@ -33,7 +33,7 @@
   dim _cont_anima_morte = r
   dim _cont_telas = s
   ; t = Livre
-  ; v = Livre no main, usada na transicao
+  ; v = Livre
   ; x = Livre   
   dim rand16 = z
 
@@ -64,24 +64,17 @@ __reset_game
   gosub __playfield_transicao
  
 __title_screen
-   COLUPF = $00 : COLUBK = $8A
+  COLUPF = $00 : COLUBK = $8A
   AUDC0 = 12
   AUDC1 = 1
   
-  if joy0fire then e = 1
-  if e = 0 then goto __skip_sound_title
-  if musicTimer = 0 then goto changeMusicNoteTitle
-
-__volta_trilha_title
-  musicTimer = musicTimer - 1
-__skip_sound_title
-
   pfscore1 = 0 : scorecolor = $00
   gosub __nave
   _animacao = 10
   drawscreen
   COLUBK=$00
   COLUPF=$06
+
   player0y = 0
   COLUP1 = $0E
   player1y = 85
@@ -89,7 +82,8 @@ __skip_sound_title
 
   if joy0fire then e = 1
   if e = 1 then pfscroll down
-   ; COR DA BARRA DO SCORE
+
+; COR DA BARRA DO SCORE
   _SC_Back = $70
   if !pfread(0,11) then goto __prepara_main
   goto __title_screen
@@ -100,7 +94,7 @@ __prepara_main
   a = 0 : d = 0 : e = 0 : f = 0 : g = 0 : h = 0
   j = 0 : k = 0 : l = 0 : m = 0 : n = 0 : o = 0 : p = 0 : q = 0 : r = 0
   s = 0 : t = 0 : u = 0 : v = 0 : w = 0 : x = 0 : y = 0
-    pfscore1=%00010101 : pfscorecolor = $40
+  pfscore1=%00010101 : pfscorecolor = $40
   pfscore2=%00010101
   missile1height=5
   
@@ -109,28 +103,25 @@ __prepara_main
 
 __Main_Loop
 
-  ; COR DO SCORE
-   scorecolor = 14
+  ; COR DO SCORE, BACK and PF
+  scorecolor = 14
+  COLUPF = $00 : COLUBK = $8A
 
-  ; ATIVA NAVE FORA DA BARREIRA
-  if player1x < 20 || player1x > 133 then _bit_supressores{6} = 1 else _bit_supressores{6} = 0
+  ; MATA NAVE FORA DA BARREIRA
+  if player1x < 20 || player1x > 133 then goto __perde_vida
 
-  ;cSOMA PONTO AO ACELERAR
-  if _bit_supressores{6} then goto __skip_aceletarion_point 
+  ;SOMA PONTO AO ACELERAR
   if joy0up then pfscroll down : score = score + 1
-__skip_aceletarion_point
-  ; MOVIMENTO LATERAL
-     
-  if joy0left && player1x > 1 then player1x = player1x - 1 : goto __skip_joy
-  if joy0right && player1x < 150 then player1x = player1x + 1 : goto __skip_joy
 
+  ; MOVIMENTO LATERAL    
+  if joy0left then player1x = player1x - 1 : goto __skip_joy
+  if joy0right then player1x = player1x + 1 : goto __skip_joy
 __skip_joy
 
-
   ; ESCUDO *******
-  if !_bit_supressores{4} then gosub __nave
-  if _bit_supressores{4} then goto __skip_escudo
-  if pfscore1 = 0  then _bit_supressores{4} = 0 : goto __skip_escudo
+  if !_bit_supressores{4} then gosub __nave ; if not shield print standard ship sprite and back
+  if _bit_supressores{4} then goto __skip_escudo ; if escudo on nave com escudo jump escudo
+  if pfscore1 = 0  then _bit_supressores{4} = 0 : goto __skip_escudo ; if no more shield jump shield
   if joy0down then _bit_supressores{4} = 1 : e = 40 : goto __escudo
 __skip_escudo
 
@@ -142,90 +133,75 @@ __skip_missile1
   if joy0fire then AUDV0 = 0 : _duracao_som0 = 10 : _bit_supressores{1} = 1 : _bit_supressores{3} = 1 : missile1y = player1y - 3:missile1x = player1x + 5
 __skip_fire
 
-  gosub __regular
-; Fases
-__fases
-  if _cont_telas >= 10 && !_bit_supressores{5} then _cont_telas = 10 : _bit_supressores{5} = 1
-  if _bit_supressores{5} then goto __transicao
- 
-__skip_transicao
-  if _fases > 200 then _fases = 0
-
-  if _fases = 0 then COLUPF = $00 : COLUBK = $8A : gosub __inimigo_bomba : goto __skip_fase_inimigo
+; CALL REDESENHA IF THE GATE IS IN THE
+  if !pfread(0,11) then _dificuldade = (rand&3) : gosub __redesenha
   
-  if _fases >= 1 then goto __fase1_inimigo
-__fase1_inimigo
-  COLUPF = $04
-  COLUBK = $00
-  COLUP1 = 14
-  if !_bit_supressores{7} then gosub __inimigo_tie else gosub __item_shield
-
-__skip_fase_inimigo
-  ; CONTADORES
+; CONTADORES
   _animacao = _animacao + 1
   if _animacao =  21 then _animacao = 0
 
   _cont_escudo = _cont_escudo - 1
   if _cont_escudo = 0 && _bit_supressores{4} then pfscore1 = pfscore1/4 : _bit_supressores{4} = 0
 
-  if _fases < 4 then c = d + 8 : goto __skip_dificuldade
-  if _fases < 8 then goto __randomicos
-  if _fases < 100 then c = d + 2 : goto __skip_dificuldade
-
-__randomicos
-  ; TAMANHO DO BURACO RANDOMICO - VALOR DE _dificuldade E GERADO EM REDESENHA
+; TAMANHO DO BURACO RANDOMICO - VALOR DE _dificuldade E GERADO EM REDESENHA
   if _dificuldade = 0 then c = d + 8 : goto __skip_dificuldade
   if _dificuldade = 1 then c = d + 6 : goto __skip_dificuldade
   if _dificuldade = 2 then c = d + 4 : goto __skip_dificuldade
   if _dificuldade = 3 then c = d + 2 : goto __skip_dificuldade
-
 __skip_dificuldade
 
-
-  if _fases > 16 then bally = 100 : goto __skip_ball
-  ballx = c + c + c + c : goto __skip_ball_pos
-  ballx = c + c + c + c + 4 : goto __skip_ball_pos
-  ballx = c + c + c + c + 8 : goto __skip_ball_pos
-  ballx = c + c + c + c + 12
+ if _fases < 2 then goto __skip_ball
+; POSITION OF THE BALL ACCORDING TO THE HOLE SIZE
+  if _dificuldade = 0 then ballx = c + c + c + c : goto __skip_ball_pos
+  if _dificuldade = 1 then ballx = c + c + c + c + 4 : goto __skip_ball_pos
+  if _dificuldade = 2 then ballx = c + c + c + c + 8 : goto __skip_ball_pos
+  if _dificuldade = 3 then ballx = c + c + c + c + 12
 __skip_ball_pos
+
+; BALL MOVEMENT
+
   bally = bally + 1
   if joy0up then bally = bally + 1
 
 __skip_ball
 
-   ; ABRE O BURACO NA TELA DE ACORO COM OS VALORES DE D E C
+; ABRE O BURACO NA TELA DE ACORO COM OS VALORES DE D E C
   pfhline d 1 c off
   CTRLPF = $31
-  goto __pfscroll
+  pfscroll down
 
-__skip_scroll
+; SE SCORE == 1000 ITEM NA TELA
+  if _fases = 4 then _bit_supressores{7} = 1
+
+  if _bit_supressores{7} then gosub __item_shield
 
 __skip_perde_vida
  
-; COLISOES E COLISOES POR FASE
-   if _bit_supressores{4} then goto __skip_collision : rem se escudo on pula as colisoes
-
+; FASES E COLISOES POR FASE
+   if _bit_supressores{4} then goto __skip_collision : ; se escudo on pula as colisoes
    if collision(ball,player1) then _duracao_som0 = 80 :  pfscore2 = pfscore2/4 : goto __perde_vida
    if collision(ball,missile1) then bally = 100 : missile1y = 0
    if collision(player1,playfield) then _duracao_som0 = 80 :  pfscore2 = pfscore2/4 : goto __perde_vida
    if collision(missile1,playfield) then missile1y = 1
+   if _bit_supressores{7} then goto __collision_itemshield ; colidiu com o item shield +1
    
 
 __skip_collision
 
-
-   if _fases = 0 then goto __fase0
-   if _fases >= 1 then goto __fase1
-
+  if _fases = 0 then goto __fase0
+  if _fases = 1 then goto __fase1
 
 __fase0
-   if collision(missile1,player0) then missile1y = 0 : _bit_supressores{3} = 0 : _duracao_som0 = 10 : score = score + 100 : player0y = 0
-   if collision(player0,player1) then _duracao_som0 = 80 : pfscore2 = pfscore2/4 : goto __perde_vida
-   goto __skip_collision_fases
+  if v <> _fases then v = _fases : player0y = 100
+  gosub __inimigo_bomba
+  if collision(missile1,player0) then missile1y = 0 : _bit_supressores{3} = 0 : _duracao_som0 = 10 : score = score + 100 : player0y = 0
+  if collision(player0,player1) then _duracao_som0 = 80 : pfscore2 = pfscore2/4 : goto __perde_vida
+  goto __skip_collision_fases
+
 __fase1
-  if _bit_supressores{7} then goto __collision_itemshield
-  
-  if collision(missile1,player0) then missile1y = 0 : _bit_supressores{3} = 0 : _duracao_som0 = 10 : score = score + 100 : _bit_supressores{7} = 1
+  if v <> _fases then v = _fases : player0y = 100
+  gosub __inimigo_tie
+  if collision(missile1,player0) then missile1y = 0 : _bit_supressores{3} = 0 : _duracao_som0 = 10 : score = score + 200 : player0y = 0
   if collision(player0,player1) then _duracao_som0 = 80 : pfscore2 = pfscore2/4 : goto __perde_vida
   goto __skip_collision_fases
 
@@ -266,23 +242,13 @@ __game_over
   if !switchreset then goto __game_over
   goto __reset_game
 
-__pfscroll
-  pfscroll down
-  goto __skip_scroll
-
-  ; CENA PRINCIPAL ONDE HA BURACOS
-__regular
- 
-  if !pfread(0,11) then _dificuldade = (rand&3) : goto __redesenha else return thisbank
 
 __redesenha
-
-  if player1x > 19 && player1x < 134 then _cont_telas = _cont_telas + 1
   d = (rand/16) + 1
   d = d + 2
-
-
-
+  bally = 0
+  _cont_telas = _cont_telas + 1
+  if _cont_telas >= 10 then _fases = _fases + 1 : _cont_telas = 0
   gosub __playfield_regular
 
   return thisbank
@@ -461,41 +427,6 @@ end
   if player0y < 2 then _bit_supressores{7} = 0
   return thisbank
 
- ; TRANSICAO ENTRE AS FASES
-__transicao
- v = 0 ; para poder usar a variavel v no main tambem.
-__main_transicao
-  missile1y = 0
-  ;bally = 100
-
-  AUDC0 = 12
-  AUDC1 = 1
-
-  if musicTimer = 0 then goto changeMusicNoteTransicao 
-__volta_trilha_transicao
-  musicTimer = musicTimer - 1
-  
-
-  player0y = 0
-  gosub __playfield_transicao
-  drawscreen
-
-  if player1x = 75 then goto __move_up
-  if player1x > 75 then goto __move_esquerda
-  
-  player1x = player1x + 1 : goto __skip_move
-__move_esquerda
-  player1x = player1x - 1 : goto __skip_move
-__move_up
-  if player1y = 0 then goto __skip_move
-  player1y = player1y - 1 
-__skip_move
-
-  v = v + 1
-  if v = 250 then v = 0 : _fases = _fases + 1 : _bit_supressores{5} = 0 : _cont_telas = 0 : AUDV0 = 0 : AUDV1 = 0 :  musicPointer = 0 : player1y = 85 : goto __skip_transicao
-  goto __main_transicao
-
-
 __playfield_regular
   playfield:
   .XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
@@ -531,42 +462,6 @@ __playfield_transicao
 end
   return thisbank
 
-changeMusicNoteTransicao
-  AUDF0 = musicData1[musicPointer]
-  AUDF1 = musicData2[musicPointer]
-  if musicData1[musicPointer] = 255 then AUDV1 = 0 else AUDV1 = 6
-  if musicData2[musicPointer] = 255 then AUDV0 = 0 else AUDV0 = 4
-  musicTimer = 10
-  musicPointer = musicPointer + 1
-  if musicPointer > 22 then musicPointer = 0
-  goto __volta_trilha_transicao
-
-changeMusicNoteTitle
-  AUDF0 = musicData1[musicPointer]
-  AUDF1 = musicData2[musicPointer]
-  if musicData1[musicPointer] = 255 then AUDV1 = 0 else AUDV1 = 6
-  if musicData2[musicPointer] = 255 then AUDV0 = 0 else AUDV0 = 4
-  musicTimer = 10
-  musicPointer = musicPointer + 1
-  if musicPointer > 22 then musicPointer = 0
-  goto __volta_trilha_title
-; DATA SOM
-
-  data musicData1
-    29, -1, 29, -1, 29, -1,
-    26, -1, 26, -1, 26, -1,
-    24, -1, 24, -1, 24, -1,
-    19, 19, 19, 19,
-    255,
-end
-
-  data musicData2
-    23, -1, 23, -1, 23, -1,
-    26, -1, 26, -1, 26, -1, 
-    29, -1, 29, -1, 29, -1,
-    23, 23, 23, 23,
-    255,
-end
 
    asm
 minikernel
